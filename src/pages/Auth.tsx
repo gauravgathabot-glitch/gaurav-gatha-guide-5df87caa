@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Shield, Mail, Lock, User, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user, signIn, signUp } = useAuth();
+  const { toast } = useToast();
+  
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,15 +24,66 @@ const Auth = () => {
     setIsSignup(searchParams.get("signup") === "true");
   }, [searchParams]);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate("/chat");
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Placeholder for auth logic (will be connected to Supabase later)
-    setTimeout(() => {
+    try {
+      if (isSignup) {
+        const { error } = await signUp(formData.email, formData.password, formData.name);
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast({
+              title: "Account Exists",
+              description: "This email is already registered. Please sign in.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Signup Failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Account Created",
+            description: "Welcome to Gaurav Gatha!",
+          });
+          navigate("/chat");
+        }
+      } else {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          toast({
+            title: "Login Failed",
+            description: "Invalid email or password",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Welcome Back",
+            description: "Jai Hind!",
+          });
+          navigate("/chat");
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      alert("Authentication requires Lovable Cloud to be enabled. This is a demo.");
-    }, 1000);
+    }
   };
 
   return (
@@ -116,7 +173,8 @@ const Auth = () => {
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Enter your password"
+                  placeholder="Enter your password (min 6 chars)"
+                  minLength={6}
                   className="w-full bg-muted/50 border border-border/50 rounded-xl pl-10 pr-12 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
                   required
                 />
@@ -130,17 +188,6 @@ const Auth = () => {
               </div>
             </div>
 
-            {!isSignup && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="text-xs text-accent hover:underline"
-                >
-                  Forgot password?
-                </button>
-              </div>
-            )}
-
             <Button
               type="submit"
               variant="hero"
@@ -148,11 +195,16 @@ const Auth = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading
-                ? "Please wait..."
-                : isSignup
-                ? "Create Account"
-                : "Sign In"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Please wait...
+                </>
+              ) : isSignup ? (
+                "Create Account"
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
 
