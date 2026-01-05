@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, User } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import logo from "@/assets/logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -22,9 +25,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="p-2 rounded-lg bg-accent/10 border border-accent/30 group-hover:bg-accent/20 transition-colors">
-              <Shield className="w-6 h-6 text-accent" />
-            </div>
+            <img src={logo} alt="Gaurav Gatha" className="w-10 h-10 md:w-12 md:h-12 object-contain rounded-lg" />
             <div>
               <h1 className="font-display text-lg md:text-xl font-bold text-foreground tracking-wide">
                 Gaurav Gatha
@@ -54,17 +55,31 @@ const Navbar = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/auth">
-              <Button variant="glass" size="sm">
-                <User className="w-4 h-4" />
-                Login
-              </Button>
-            </Link>
-            <Link to="/auth?signup=true">
-              <Button variant="hero" size="sm">
-                Sign Up
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {user.email?.split("@")[0]}
+                </span>
+                <Button variant="glass" size="sm" onClick={signOut}>
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="glass" size="sm">
+                    <User className="w-4 h-4" />
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/auth?signup=true">
+                  <Button variant="hero" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -99,16 +114,25 @@ const Navbar = () => {
                 </Link>
               ))}
               <div className="flex gap-2 mt-4 px-4">
-                <Link to="/auth" className="flex-1" onClick={() => setIsOpen(false)}>
-                  <Button variant="glass" className="w-full">
-                    Login
+                {user ? (
+                  <Button variant="glass" className="w-full" onClick={() => { signOut(); setIsOpen(false); }}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
                   </Button>
-                </Link>
-                <Link to="/auth?signup=true" className="flex-1" onClick={() => setIsOpen(false)}>
-                  <Button variant="hero" className="w-full">
-                    Sign Up
-                  </Button>
-                </Link>
+                ) : (
+                  <>
+                    <Link to="/auth" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Button variant="glass" className="w-full">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/auth?signup=true" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Button variant="hero" className="w-full">
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

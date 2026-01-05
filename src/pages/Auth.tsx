@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, Mail, Lock, User, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/logo.png";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -102,9 +103,7 @@ const Auth = () => {
         <div className="glass-card rounded-2xl p-8 shadow-elevated">
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-accent/10 border border-accent/30">
-              <Shield className="w-8 h-8 text-accent" />
-            </div>
+            <img src={logo} alt="Gaurav Gatha" className="w-14 h-14 object-contain rounded-xl" />
             <div className="text-left">
               <h1 className="font-display text-xl font-bold text-foreground">
                 Gaurav Gatha
