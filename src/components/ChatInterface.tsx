@@ -14,6 +14,7 @@ import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import ChatSuggestions from "./ChatSuggestions";
 import logo from "@/assets/logo.png";
 
 const ChatInterface = () => {
@@ -58,6 +59,10 @@ const ChatInterface = () => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
   };
 
   const handleVoiceClick = async () => {
@@ -125,16 +130,19 @@ const ChatInterface = () => {
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-20">
-            {/* Welcome Message like ChatGPT */}
+            {/* Welcome Message */}
             <div className="flex items-center gap-3 mb-4">
               <img src={logo} alt="Gaurav Gatha" className="w-12 h-12 object-contain rounded-xl" />
             </div>
             <h2 className="text-xl font-display font-semibold text-foreground mb-1">
               Gaurav Gatha
             </h2>
-            <p className="text-sm text-muted-foreground mb-8">
-              HII WHAT CAN I HELP YOU
+            <p className="text-sm text-muted-foreground mb-6">
+              Welcome! How can I help you today?
             </p>
+            
+            {/* Suggestions */}
+            <ChatSuggestions onSuggestionClick={handleSuggestionClick} />
           </div>
         ) : (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
@@ -224,7 +232,7 @@ const ChatInterface = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder='"Start typing... (Likhna shuru karein)"'
+              placeholder="Type your question... (Apna sawal likhein)"
               className="flex-1 bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground min-h-[24px] max-h-[200px] py-2"
               rows={1}
             />
@@ -255,12 +263,20 @@ const ChatInterface = () => {
                   <Mic className="w-5 h-5" />
                 )}
               </button>
+
+              <button
+                onClick={handleSend}
+                disabled={isLoading || (!input.trim() && !selectedImage)}
+                className="p-2 rounded-lg bg-accent text-accent-foreground hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
           {/* Footer link */}
           <p className="text-xs text-center text-accent mt-3 font-medium">
-            AGS HAJINAR
+            AGS HAJINAR • Karnah, Kupwara
           </p>
         </div>
       </div>
