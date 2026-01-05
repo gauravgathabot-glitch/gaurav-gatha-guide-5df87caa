@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
-import { X, Upload, Loader2, Plus, Trash2, FileText, Image, Video, Music } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, Upload, Loader2, Plus, Trash2, FileText, Image, Video, Music, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -68,9 +69,9 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
     setLoading(false);
   };
 
-  useState(() => {
+  useEffect(() => {
     if (isOpen) fetchResources();
-  });
+  }, [isOpen]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -165,133 +166,180 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Add New Resource */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Add Knowledge Resource</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Title</label>
-                <input
-                  type="text"
-                  value={newResource.title}
-                  onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
-                  className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm"
-                  placeholder="e.g., Kargil War Memorial"
-                />
-              </div>
+        {/* Tabs */}
+        <Tabs defaultValue="sources" className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="mx-4 mt-4 grid grid-cols-2">
+            <TabsTrigger value="sources">Data Sources</TabsTrigger>
+            <TabsTrigger value="themes">Themes</TabsTrigger>
+          </TabsList>
 
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Content</label>
-                <textarea
-                  value={newResource.content}
-                  onChange={(e) => setNewResource({ ...newResource, content: e.target.value })}
-                  className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm min-h-[100px]"
-                  placeholder="Detailed information about this resource..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+          {/* Data Sources Tab */}
+          <TabsContent value="sources" className="flex-1 overflow-y-auto p-4 space-y-6">
+            {/* Add New Resource */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground">Add Knowledge Resource</h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Category</label>
-                  <select
-                    value={newResource.category}
-                    onChange={(e) => setNewResource({ ...newResource, category: e.target.value })}
+                  <label className="text-sm text-muted-foreground mb-1 block">Title</label>
+                  <input
+                    type="text"
+                    value={newResource.title}
+                    onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
                     className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm"
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat.value} value={cat.value}>{cat.label}</option>
-                    ))}
-                  </select>
+                    placeholder="e.g., Kargil War Memorial"
+                  />
                 </div>
 
                 <div>
-                  <label className="text-sm text-muted-foreground mb-1 block">Media Type</label>
-                  <select
-                    value={newResource.media_type}
-                    onChange={(e) => setNewResource({ ...newResource, media_type: e.target.value })}
-                    className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm"
-                  >
-                    {mediaTypes.map((type) => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
+                  <label className="text-sm text-muted-foreground mb-1 block">Content</label>
+                  <textarea
+                    value={newResource.content}
+                    onChange={(e) => setNewResource({ ...newResource, content: e.target.value })}
+                    className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm min-h-[100px]"
+                    placeholder="Detailed information about this resource..."
+                  />
                 </div>
-              </div>
 
-              {/* File Upload */}
-              <div>
-                <label className="text-sm text-muted-foreground mb-1 block">Attach File (Optional)</label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-accent/50 transition-colors"
-                >
-                  {selectedFile ? (
-                    <p className="text-sm text-foreground">{selectedFile.name}</p>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <Upload className="w-6 h-6" />
-                      <p className="text-sm">Click to upload</p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  accept="image/*,video/*,audio/*,.pdf"
-                />
-              </div>
-
-              <Button type="submit" disabled={uploading} className="w-full">
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Resource
-                  </>
-                )}
-              </Button>
-            </form>
-          </div>
-
-          {/* Existing Resources */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Existing Resources ({resources.length})</h3>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-accent" />
-              </div>
-            ) : resources.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No resources yet</p>
-            ) : (
-              <div className="space-y-2">
-                {resources.map((resource) => (
-                  <div
-                    key={resource.id}
-                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate">{resource.title}</p>
-                      <p className="text-xs text-muted-foreground">{resource.category}</p>
-                    </div>
-                    <button
-                      onClick={() => deleteResource(resource.id)}
-                      className="p-2 rounded-lg hover:bg-destructive/20 text-destructive transition-colors"
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Category</label>
+                    <select
+                      value={newResource.category}
+                      onChange={(e) => setNewResource({ ...newResource, category: e.target.value })}
+                      className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      {categories.map((cat) => (
+                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm text-muted-foreground mb-1 block">Media Type</label>
+                    <select
+                      value={newResource.media_type}
+                      onChange={(e) => setNewResource({ ...newResource, media_type: e.target.value })}
+                      className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm"
+                    >
+                      {mediaTypes.map((type) => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* File Upload */}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">Attach File (Optional)</label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-accent/50 transition-colors"
+                  >
+                    {selectedFile ? (
+                      <p className="text-sm text-foreground">{selectedFile.name}</p>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Upload className="w-6 h-6" />
+                        <p className="text-sm">Click to upload</p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept="image/*,video/*,audio/*,.pdf"
+                  />
+                </div>
+
+                <Button type="submit" disabled={uploading} className="w-full">
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Resource
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
+
+            {/* Existing Resources */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground">Existing Resources ({resources.length})</h3>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                </div>
+              ) : resources.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No resources yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {resources.map((resource) => (
+                    <div
+                      key={resource.id}
+                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-foreground truncate">{resource.title}</p>
+                        <p className="text-xs text-muted-foreground">{resource.category}</p>
+                      </div>
+                      <button
+                        onClick={() => deleteResource(resource.id)}
+                        className="p-2 rounded-lg hover:bg-destructive/20 text-destructive transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Themes Tab */}
+          <TabsContent value="themes" className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Theme Management
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Users can select themes from the menu dropdown. The following themes are available:
+              </p>
+              
+              <div className="space-y-3">
+                {[
+                  { name: "Military (Default)", desc: "Gold & Olive - Army inspired", color: "bg-amber-500" },
+                  { name: "Ocean Blue", desc: "Blue & Cyan - Cool tones", color: "bg-cyan-500" },
+                  { name: "Forest Green", desc: "Green & Emerald - Nature inspired", color: "bg-emerald-500" },
+                  { name: "Sunset Orange", desc: "Orange & Amber - Warm tones", color: "bg-orange-500" },
+                  { name: "Midnight Purple", desc: "Purple & Indigo - Night vibes", color: "bg-purple-500" },
+                ].map((theme, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                    <div className={`w-4 h-4 rounded-full ${theme.color}`} />
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{theme.name}</p>
+                      <p className="text-xs text-muted-foreground">{theme.desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
+
+              <div className="p-4 bg-accent/10 rounded-lg border border-accent/30 mt-6">
+                <p className="text-sm text-foreground">
+                  <strong>Note:</strong> Custom theme creation will be available in a future update. 
+                  Currently users can choose from the 5 preset themes via the menu.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

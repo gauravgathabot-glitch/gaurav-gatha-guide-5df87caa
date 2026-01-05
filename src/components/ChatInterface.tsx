@@ -5,24 +5,16 @@ import {
   Mic, 
   Image, 
   Loader2,
-  Sparkles,
-  Plus,
   MicOff,
   X,
-  User
+  Lightbulb
 } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-const suggestions = [
-  "Tell me about the Kargil War",
-  "Find nearby hotels",
-  "Emergency contacts",
-  "Heritage sites to visit",
-];
+import logo from "@/assets/logo.png";
 
 const ChatInterface = () => {
   const { messages, isLoading, sendMessage, clearMessages } = useChat();
@@ -127,163 +119,150 @@ const ChatInterface = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSuggestion = (suggestion: string) => {
-    setInput(suggestion);
-  };
-
   return (
-    <div className="flex flex-col h-full max-w-3xl mx-auto">
+    <div className="flex flex-col h-full">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-accent to-accent/50 flex items-center justify-center mb-6">
-              <Sparkles className="w-8 h-8 text-background" />
+          <div className="flex flex-col items-center justify-center h-full text-center px-4 pb-20">
+            {/* Welcome Message like ChatGPT */}
+            <div className="flex items-center gap-3 mb-4">
+              <img src={logo} alt="Gaurav Gatha" className="w-12 h-12 object-contain rounded-xl" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
-              Jai Hind!
+            <h2 className="text-xl font-display font-semibold text-foreground mb-1">
+              Gaurav Gatha
             </h2>
-            <p className="text-muted-foreground mb-8 max-w-md">
-              I'm your Gaurav Gatha AI Guide. Ask me about Indian Army heritage, local tourism, or get travel help.
+            <p className="text-sm text-muted-foreground mb-8">
+              HII WHAT CAN I HELP YOU
             </p>
-            
-            <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-              {suggestions.map((suggestion, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleSuggestion(suggestion)}
-                  className="p-3 text-left text-sm rounded-xl border border-border/50 bg-card/50 hover:bg-card hover:border-accent/30 transition-all text-muted-foreground hover:text-foreground"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
           </div>
         ) : (
-          <>
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
               >
-                {message.role === "assistant" && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-accent" />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 ${
+                {/* Avatar */}
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full overflow-hidden ${
+                  message.role === "assistant" ? "bg-accent/20" : "bg-primary/20"
+                }`}>
+                  {message.role === "assistant" ? (
+                    <img src={logo} alt="Bot" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-primary text-xs font-bold">
+                      {user?.email?.charAt(0).toUpperCase() || "U"}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Message Content */}
+                <div className={`max-w-[80%] ${message.role === "user" ? "text-right" : ""}`}>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {message.role === "assistant" ? "Gaurav Gatha" : "You"}
+                  </p>
+                  <div className={`rounded-2xl px-4 py-2.5 ${
                     message.role === "user"
                       ? "bg-accent text-accent-foreground"
-                      : "bg-muted/50"
-                  }`}
-                >
-                  <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                    {message.content}
-                  </p>
-                </div>
-                {message.role === "user" && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <User className="w-4 h-4 text-primary" />
+                      : "bg-muted/50 text-foreground"
+                  }`}>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.content}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
             ))}
+            
             {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-accent" />
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-accent/20">
+                  <img src={logo} alt="Bot" className="w-full h-full object-cover" />
                 </div>
-                <div className="bg-muted/50 rounded-2xl px-4 py-3">
-                  <div className="flex items-center gap-2">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Gaurav Gatha</p>
+                  <div className="bg-muted/50 rounded-2xl px-4 py-2.5">
                     <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                    <span className="text-sm text-muted-foreground">Thinking...</span>
                   </div>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
-          </>
+          </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 border-t border-border/30">
-        {/* Image Preview */}
-        {imagePreview && (
-          <div className="mb-3 relative inline-block">
-            <img 
-              src={imagePreview} 
-              alt="Selected" 
-              className="h-20 rounded-lg object-cover"
+      {/* Input Area - Fixed at bottom */}
+      <div className="border-t border-border/30 bg-background p-4">
+        <div className="max-w-3xl mx-auto">
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="mb-3 relative inline-block">
+              <img 
+                src={imagePreview} 
+                alt="Selected" 
+                className="h-16 rounded-lg object-cover"
+              />
+              <button
+                onClick={removeImage}
+                className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+          
+          <div className="flex items-end gap-2 bg-muted/30 rounded-2xl border border-border/50 p-2">
+            {/* Lightbulb placeholder */}
+            <div className="p-2 text-accent">
+              <Lightbulb className="w-5 h-5" />
+            </div>
+
+            {/* Text Input */}
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder='"Start typing... (Likhna shuru karein)"'
+              className="flex-1 bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground min-h-[24px] max-h-[200px] py-2"
+              rows={1}
             />
-            <button
-              onClick={removeImage}
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-        
-        <div className="flex items-end gap-2 bg-muted/30 rounded-2xl border border-border/50 p-2">
-          {/* Action buttons */}
-          <div className="flex gap-1">
-            <button
-              onClick={handleImageClick}
-              className="p-2 rounded-xl hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-              title={user ? "Attach image" : "Login to attach images"}
-            >
-              <Image className="w-5 h-5" />
-            </button>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleImageClick}
+                className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Image className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={handleVoiceClick}
+                disabled={isTranscribing}
+                className={`p-2 rounded-lg transition-colors ${
+                  isRecording 
+                    ? "bg-destructive text-destructive-foreground animate-pulse" 
+                    : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {isTranscribing ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : isRecording ? (
+                  <MicOff className="w-5 h-5" />
+                ) : (
+                  <Mic className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Text Input */}
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Gaurav Gatha..."
-            className="flex-1 bg-transparent border-none outline-none resize-none text-sm md:text-base text-foreground placeholder:text-muted-foreground min-h-[24px] max-h-[200px] py-2"
-            rows={1}
-          />
-
-          {/* Voice & Send buttons */}
-          <div className="flex gap-1">
-            <button
-              onClick={handleVoiceClick}
-              disabled={isTranscribing}
-              className={`p-2 rounded-xl transition-colors ${
-                isRecording 
-                  ? "bg-destructive text-destructive-foreground animate-pulse" 
-                  : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
-              }`}
-              title={user ? (isRecording ? "Stop recording" : "Start voice input") : "Login for voice input"}
-            >
-              {isTranscribing ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : isRecording ? (
-                <MicOff className="w-5 h-5" />
-              ) : (
-                <Mic className="w-5 h-5" />
-              )}
-            </button>
-            
-            <Button
-              onClick={handleSend}
-              disabled={(!input.trim() && !selectedImage) || isLoading}
-              size="icon"
-              className="rounded-xl h-10 w-10 bg-accent hover:bg-accent/90"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-          </div>
+          {/* Footer link */}
+          <p className="text-xs text-center text-accent mt-3 font-medium">
+            AGS HAJINAR
+          </p>
         </div>
-
-        <p className="text-xs text-center text-muted-foreground mt-3">
-          Gaurav Gatha AI may make mistakes. Verify important information.
-        </p>
       </div>
 
       <input
