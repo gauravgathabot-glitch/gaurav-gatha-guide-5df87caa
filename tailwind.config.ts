@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        display: ['Cinzel', 'serif'],
+        body: ['Inter', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +61,21 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        olive: {
+          DEFAULT: "hsl(80 35% 28%)",
+          light: "hsl(80 30% 40%)",
+          dark: "hsl(80 40% 18%)",
+        },
+        gold: {
+          DEFAULT: "hsl(42 75% 50%)",
+          light: "hsl(42 70% 60%)",
+          dark: "hsl(42 80% 40%)",
+        },
+        charcoal: {
+          DEFAULT: "hsl(220 15% 8%)",
+          light: "hsl(220 12% 15%)",
+          dark: "hsl(220 18% 5%)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +84,31 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-gold": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-gold": "pulse-gold 2s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
+      },
+      backgroundImage: {
+        "hero-pattern": "radial-gradient(ellipse at top, hsl(80 20% 12%) 0%, hsl(220 15% 8%) 70%)",
+        "card-shine": "linear-gradient(135deg, transparent 0%, hsla(42, 75%, 50%, 0.05) 50%, transparent 100%)",
       },
     },
   },
