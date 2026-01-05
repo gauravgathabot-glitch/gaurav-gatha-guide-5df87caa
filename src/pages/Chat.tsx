@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   MoreHorizontal, 
@@ -9,13 +9,14 @@ import {
   Plus, 
   History,
   Palette,
-  ChevronRight
+  Globe
 } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
 import AdminSettings from "@/components/AdminSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTheme } from "@/hooks/useTheme";
+import { useLanguage } from "@/hooks/useLanguage";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ const Chat = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const { theme, setTheme, themes } = useTheme();
+  const { language, setLanguage, languages, t } = useLanguage();
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
 
@@ -42,7 +44,7 @@ const Chat = () => {
 
   return (
     <div className="h-screen bg-background flex flex-col">
-      {/* Header - Like ChatGPT with logo left, menu right */}
+      {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-border/30">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="Gaurav Gatha" className="h-8 w-8 object-contain rounded" />
@@ -62,14 +64,14 @@ const Chat = () => {
             {/* New Chat */}
             <DropdownMenuItem onClick={handleNewChat} className="cursor-pointer">
               <Plus className="w-4 h-4 mr-2" />
-              New Chat
+              {t("newChat")}
             </DropdownMenuItem>
             
             {/* Chat History - Only for logged in users */}
             {user && (
               <DropdownMenuItem className="cursor-pointer">
                 <History className="w-4 h-4 mr-2" />
-                Chat History
+                {t("chatHistory")}
               </DropdownMenuItem>
             )}
             
@@ -79,7 +81,7 @@ const Chat = () => {
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer">
                 <Palette className="w-4 h-4 mr-2" />
-                Theme
+                {t("theme")}
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="bg-card border-border">
@@ -100,6 +102,32 @@ const Chat = () => {
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
             </DropdownMenuSub>
+
+            {/* Language Selector */}
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="cursor-pointer">
+                <Globe className="w-4 h-4 mr-2" />
+                Language
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="bg-card border-border">
+                  {languages.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.id}
+                      onClick={() => setLanguage(lang.id)}
+                      className={`cursor-pointer ${language === lang.id ? "bg-accent/20" : ""}`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span>{lang.name} ({lang.native})</span>
+                        {language === lang.id && (
+                          <div className="w-2 h-2 rounded-full bg-accent" />
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
             
             <DropdownMenuSeparator />
             
@@ -112,7 +140,7 @@ const Chat = () => {
                     className="cursor-pointer"
                   >
                     <Settings className="w-4 h-4 mr-2" />
-                    Admin Settings
+                    {t("adminSettings")}
                   </DropdownMenuItem>
                 )}
                 
@@ -130,7 +158,7 @@ const Chat = () => {
                   className="cursor-pointer text-destructive"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  {t("signOut")}
                 </DropdownMenuItem>
               </>
             ) : (
@@ -140,14 +168,14 @@ const Chat = () => {
                   className="cursor-pointer"
                 >
                   <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
+                  {t("signIn")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => navigate("/auth?signup=true")} 
                   className="cursor-pointer"
                 >
                   <User className="w-4 h-4 mr-2" />
-                  Sign Up
+                  {t("signUp")}
                 </DropdownMenuItem>
               </>
             )}
