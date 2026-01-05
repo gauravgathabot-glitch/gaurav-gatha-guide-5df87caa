@@ -1,25 +1,54 @@
-import Navbar from "@/components/Navbar";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Menu, Plus, ArrowLeft, LogIn } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
-import Footer from "@/components/Footer";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 const Chat = () => {
+  const { user } = useAuth();
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
-      <main className="flex-1 pt-20 pb-8">
-        <div className="container mx-auto px-4 h-full">
-          <div className="max-w-4xl mx-auto h-[calc(100vh-12rem)]">
-            <div className="text-center mb-6">
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-2">
-                AI <span className="text-gradient-gold">Guide</span>
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Ask about heritage sites, local tourism, or army history
-              </p>
-            </div>
-            <ChatInterface />
+    <div className="h-screen bg-background flex flex-col">
+      {/* Minimal Header */}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <Link 
+            to="/" 
+            className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="font-display text-lg font-bold text-gradient-gold">
+              Gaurav Gatha
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-accent/20 text-accent font-medium">
+              AI Guide
+            </span>
           </div>
         </div>
+        
+        <div className="flex items-center gap-2">
+          {user ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="hidden sm:inline">{user.email?.split("@")[0]}</span>
+            </div>
+          ) : (
+            <Link to="/auth">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <LogIn className="w-4 h-4" />
+                <span className="hidden sm:inline">Login</span>
+              </Button>
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {/* Chat Area */}
+      <main className="flex-1 overflow-hidden">
+        <ChatInterface />
       </main>
     </div>
   );
