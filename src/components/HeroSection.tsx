@@ -4,8 +4,8 @@ import { MessageCircle, MapPin, CalendarDays, ChevronDown } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
-  const scrollToContent = () => {
-    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+  const scrollToAbout = () => {
+    document.getElementById("about")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -89,7 +89,7 @@ const HeroSection = () => {
 
       {/* Scroll Indicator */}
       <button
-        onClick={scrollToContent}
+        onClick={scrollToAbout}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 p-3 rounded-full glass-card border border-accent/30 hover:border-accent/60 transition-colors animate-float cursor-pointer"
       >
         <ChevronDown className="w-5 h-5 text-accent" />
