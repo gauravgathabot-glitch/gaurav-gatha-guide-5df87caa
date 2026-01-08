@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { 
   X, Upload, Loader2, Plus, Trash2, FileText, Image, Video, Music, 
   Palette, MapPin, Building, Phone, Shield, UtensilsCrossed, HelpCircle,
-  Globe, Link as LinkIcon, Eye, EyeOff
+  Globe, Link as LinkIcon, Eye, EyeOff, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -111,13 +112,44 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
     return data.publicUrl;
   };
 
+  const extractPdfText = async (pdfUrl: string, resourceId: string) => {
+    try {
+      console.log("Starting PDF text extraction...");
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-pdf`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ pdfUrl, resourceId }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("PDF extraction result:", result);
+        toast({
+          title: "📄 PDF Processed!",
+          description: `Extracted ${result.extractedLength} characters for AI to use`,
+        });
+      } else {
+        console.error("PDF extraction failed:", await response.text());
+      }
+    } catch (error) {
+      console.error("PDF extraction error:", error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newResource.title.trim()) {
       toast({ title: "Error", description: "Title is required", variant: "destructive" });
       return;
     }
-    if (!newResource.content.trim() && newResource.media_type !== "link") {
+    // Allow empty content for PDFs since we'll extract it
+    if (!newResource.content.trim() && newResource.media_type !== "link" && newResource.media_type !== "pdf") {
       toast({ title: "Error", description: "Content/Description is required", variant: "destructive" });
       return;
     }
@@ -138,22 +170,35 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
         }
       }
 
-      const { error } = await supabase.from("knowledge_resources").insert({
+      // For PDFs, set placeholder content that will be replaced by extraction
+      const contentToSave = newResource.media_type === "pdf" 
+        ? (newResource.content.trim() || `[Processing PDF: ${newResource.title}...]`)
+        : (newResource.content.trim() || newResource.title.trim());
+
+      const { data, error } = await supabase.from("knowledge_resources").insert({
         title: newResource.title.trim(),
-        content: newResource.content.trim() || newResource.title.trim(),
+        content: contentToSave,
         category: newResource.category,
         media_type: newResource.media_type,
         media_url: mediaUrl,
         is_active: true,
-      });
+      }).select().single();
 
       if (error) {
         toast({ title: "Error", description: "Failed to add resource", variant: "destructive" });
       } else {
         toast({ 
           title: "✅ Resource Added!", 
-          description: "AI will now use this information in responses" 
+          description: newResource.media_type === "pdf" 
+            ? "Processing PDF content for AI..." 
+            : "AI will now use this information in responses" 
         });
+        
+        // If PDF, trigger text extraction
+        if (newResource.media_type === "pdf" && mediaUrl && data?.id) {
+          extractPdfText(mediaUrl, data.id);
+        }
+        
         setNewResource({ title: "", content: "", category: "general", media_type: "text", external_link: "" });
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -462,6 +507,15 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
+                          {resource.media_type === "pdf" && resource.media_url && (
+                            <button
+                              onClick={() => extractPdfText(resource.media_url!, resource.id)}
+                              className="p-2 rounded-lg hover:bg-accent/20 text-accent transition-colors"
+                              title="Re-extract PDF content"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => toggleResourceStatus(resource.id, resource.is_active)}
                             className={`p-2 rounded-lg transition-colors ${
