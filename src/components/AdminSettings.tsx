@@ -127,18 +127,36 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
         }
       );
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("PDF extraction result:", result);
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("PDF extraction failed:", errText);
         toast({
-          title: "📄 PDF Processed!",
-          description: `Extracted ${result.extractedLength} characters for AI to use`,
+          title: "PDF processing failed",
+          description: "Could not extract PDF text yet. Please try again.",
+          variant: "destructive",
         });
-      } else {
-        console.error("PDF extraction failed:", await response.text());
+        return false;
       }
+
+      const result = await response.json();
+      console.log("PDF extraction result:", result);
+
+      toast({
+        title: "📄 PDF Ready for AI",
+        description: `Extracted ${result.extractedLength} characters. Chatbot can use it now.`,
+      });
+
+      // Refresh list so admin instantly sees updated content
+      fetchResources();
+      return true;
     } catch (error) {
       console.error("PDF extraction error:", error);
+      toast({
+        title: "PDF processing error",
+        description: "Something went wrong while extracting PDF text.",
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
@@ -187,18 +205,20 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
       if (error) {
         toast({ title: "Error", description: "Failed to add resource", variant: "destructive" });
       } else {
-        toast({ 
-          title: "✅ Resource Added!", 
-          description: newResource.media_type === "pdf" 
-            ? "Processing PDF content for AI..." 
-            : "AI will now use this information in responses" 
-        });
-        
-        // If PDF, trigger text extraction
+        // If PDF, extract immediately so chatbot can use it right away
         if (newResource.media_type === "pdf" && mediaUrl && data?.id) {
-          extractPdfText(mediaUrl, data.id);
+          toast({
+            title: "✅ PDF Uploaded",
+            description: "Extracting text for chatbot...",
+          });
+          await extractPdfText(mediaUrl, data.id);
+        } else {
+          toast({
+            title: "✅ Resource Added!",
+            description: "AI will now use this information in responses",
+          });
         }
-        
+
         setNewResource({ title: "", content: "", category: "general", media_type: "text", external_link: "" });
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = "";

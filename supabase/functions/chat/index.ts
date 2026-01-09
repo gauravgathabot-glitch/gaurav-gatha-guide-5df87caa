@@ -25,11 +25,12 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch ALL active knowledge resources with full content
+    // Fetch active knowledge resources (our ONLY allowed knowledge source)
     const { data: resources, error: resourcesError } = await supabase
       .from("knowledge_resources")
-      .select("title, content, category, media_type, media_url")
-      .eq("is_active", true);
+      .select("title, content, category, media_type, media_url, updated_at")
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false });
 
     if (resourcesError) {
       console.error("Error fetching resources:", resourcesError);
@@ -37,32 +38,98 @@ serve(async (req) => {
 
     console.log("Loaded", resources?.length || 0, "knowledge resources");
 
-    // Build comprehensive knowledge context
-    let knowledgeContext = "";
-    if (resources && resources.length > 0) {
-      knowledgeContext = "\n\n## YOUR COMPLETE KNOWLEDGE BASE (USE ALL THIS DATA):\n";
-      knowledgeContext += "You MUST use the information below to answer questions. This is your ONLY source of truth.\n\n";
-      
-      // Group by category for better organization
-      const categories: Record<string, typeof resources> = {};
-      resources.forEach((r) => {
-        if (!categories[r.category]) categories[r.category] = [];
-        categories[r.category].push(r);
-      });
+    // Build a SMALL, RELEVANT context (avoid sending the whole database to the model)
+    const normalize = (s: string) => (s || "").toLowerCase();
 
-      for (const [category, items] of Object.entries(categories)) {
-        knowledgeContext += `\n### Category: ${category.toUpperCase()}\n`;
-        items.forEach((r) => {
-          knowledgeContext += `\n**${r.title}**\n`;
-          knowledgeContext += `${r.content}\n`;
-          if (r.media_url) {
-            knowledgeContext += `📎 Source/Media: ${r.media_url}\n`;
-          }
-        });
+    const lastUserText = [...(messages || [])]
+      .reverse()
+      .find((m: any) => m?.role === "user")?.content as string | undefined;
+
+    const prevUserText = [...(messages || [])]
+      .reverse()
+      .slice(1)
+      .find((m: any) => m?.role === "user")?.content as string | undefined;
+
+    const isFollowUp = (t: string) => {
+      const x = normalize(t).trim();
+      if (!x) return false;
+      if (x.length > 30) return false;
+      const follow = [
+        "aur batao",
+        "or batao",
+        "aur btao",
+        "more",
+        "tell me more",
+        "details",
+        "detail",
+        "aage",
+        "further",
+      ];
+      return follow.some((p) => x.includes(p));
+    };
+
+    const effectiveQuery =
+      lastUserText && isFollowUp(lastUserText) && prevUserText
+        ? `${prevUserText}\n\n(User is asking to elaborate further)`
+        : (lastUserText || "");
+
+    const tokens = normalize(effectiveQuery)
+      .replace(/[^\p{L}\p{N}\s]/gu, " ")
+      .split(/\s+/)
+      .filter(Boolean)
+      .filter((w) => w.length > 2)
+      .slice(0, 24);
+
+    const scored = (resources || []).map((r: any) => {
+      const title = normalize(r.title);
+      const cat = normalize(r.category);
+      const content = normalize(r.content);
+      let score = 0;
+      for (const tok of tokens) {
+        if (title.includes(tok)) score += 8;
+        if (cat.includes(tok)) score += 3;
+        if (content.includes(tok)) score += 1;
       }
-      
-      knowledgeContext += "\n\n---END OF KNOWLEDGE BASE---\n";
-      knowledgeContext += "IMPORTANT: Answer questions using ONLY the above data. If asked about something not covered above, say it's not in your knowledge base.";
+      return { r, score };
+    });
+
+    const selectedResources = scored
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12)
+      .map((x) => x.r);
+
+    const contextResources = selectedResources.length > 0
+      ? selectedResources
+      : (resources || []).slice(0, 6);
+
+    let knowledgeContext = "";
+    if (contextResources.length > 0) {
+      knowledgeContext += "\n\n## VERIFIED KNOWLEDGE (USE THIS ONLY)\n";
+      knowledgeContext += `User query: ${effectiveQuery || "(empty)"}\n\n`;
+
+      for (const r of contextResources) {
+        const maxChars = r.media_type === "pdf" ? 6000 : 2500;
+        const snippet = (r.content || "").slice(0, maxChars);
+
+        knowledgeContext += `\n### ${r.title}\n`;
+        knowledgeContext += `Category: ${r.category}\n`;
+        knowledgeContext += `Type: ${r.media_type || "text"}\n`;
+        if (r.media_url) knowledgeContext += `Source URL: ${r.media_url}\n`;
+        knowledgeContext += `Content (excerpt):\n${snippet}\n`;
+      }
+
+      const sources = contextResources
+        .filter((r: any) => !!r.media_url)
+        .map((r: any) => `- ${r.title}: ${r.media_url}`)
+        .join("\n");
+
+      if (sources) {
+        knowledgeContext += "\n## SOURCES & REFERENCES (links you can include)\n";
+        knowledgeContext += sources + "\n";
+      }
+
+      knowledgeContext += "\n--- END VERIFIED KNOWLEDGE ---\n";
     }
 
     const systemPrompt = `You are Gaurav Gatha AI Guide - a knowledgeable digital guide for Gaurav Gatha – Karnah Border Heritage & Tourism Platform.
@@ -81,24 +148,22 @@ PLATFORM IDENTITY:
 - Founders: Ubaid ur Rehman & Fazdha Mushtaq
 
 HOW TO USE KNOWLEDGE BASE:
-1. SEARCH the knowledge base below thoroughly for relevant information
+1. SEARCH the provided knowledge context thoroughly for relevant information
 2. COMBINE information from multiple entries when answering
 3. PROVIDE comprehensive answers using ALL relevant data
-4. If the user asks about a topic that IS in your knowledge base, give a DETAILED answer
-5. ONLY say "not available" if the topic is genuinely NOT covered in ANY knowledge entry
+4. If the user asks a follow-up like "aur batao" / "more", EXPAND using the SAME topic and the same sources
 
 RESPONSE FORMAT:
 🔹 **Title** - Clear heading for the topic
-🔹 **Explanation** - Detailed, well-structured information from your knowledge base
-🔹 **Sources** - Mention PDF/document sources if available
+🔹 **Explanation** - Detailed, well-structured information from the knowledge base
+🔹 **Sources & References** - List any relevant PDF/link sources (URLs) that appear in the knowledge context
 
 CRITICAL RULES:
 - NEVER say "Jai Hind" or any religious/nationalist greetings
 - Use neutral greetings: "Hello!", "Welcome!", "Welcome to Gaurav Gatha!"
 - Be helpful and provide as much relevant information as possible
-- If information IS available, share it fully - don't hold back
-- Only say "not in knowledge base" for genuinely missing topics
-- For missing topics, say: "This information is not currently in my knowledge base. For more details, please DM us on Instagram: @aidevstudio.team"
+- If information IS available in the provided knowledge context, share it fully - don't hold back
+- If information is NOT available in the provided knowledge context, clearly say it is not currently available in the knowledge base (do NOT ask users to DM).
 
 ABOUT SECTION INFO:
 Platform: Gaurav Gatha - Digital heritage, history & tourism platform
