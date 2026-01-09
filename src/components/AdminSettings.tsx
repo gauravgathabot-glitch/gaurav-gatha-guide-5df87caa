@@ -29,8 +29,8 @@ const categories = [
 const mediaTypes = [
   { value: "text", label: "Text Only", icon: FileText, accept: "", description: "Plain text information" },
   { value: "image", label: "Image", icon: Image, accept: "image/*", description: "Photos & pictures" },
-  { value: "video", label: "Video", icon: Video, accept: "video/*", description: "Video content" },
-  { value: "audio", label: "Audio", icon: Music, accept: "audio/*", description: "Audio recordings" },
+  { value: "video_link", label: "Video Link", icon: Video, accept: "", description: "YouTube/Drive/Instagram video link" },
+  { value: "audio_link", label: "Audio Link", icon: Music, accept: "", description: "Drive/SoundCloud audio link" },
   { value: "pdf", label: "PDF Document", icon: FileText, accept: ".pdf", description: "PDF files" },
   { value: "link", label: "External Link", icon: LinkIcon, accept: "", description: "Website URLs" },
 ];
@@ -177,8 +177,14 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
     try {
       let mediaUrl = null;
       
-      if (newResource.media_type === "link") {
+      // Handle link-based media types (no file upload needed)
+      if (newResource.media_type === "link" || newResource.media_type === "video_link" || newResource.media_type === "audio_link") {
         mediaUrl = newResource.external_link;
+        if (!mediaUrl) {
+          toast({ title: "Error", description: "Please provide a valid URL", variant: "destructive" });
+          setUploading(false);
+          return;
+        }
       } else if (selectedFile) {
         mediaUrl = await uploadFile(selectedFile);
         if (!mediaUrl) {
@@ -381,19 +387,34 @@ const AdminSettings = ({ isOpen, onClose }: AdminSettingsProps) => {
               </div>
 
               {/* Step 5: File/Link Upload */}
-              {newResource.media_type === "link" ? (
+              {(newResource.media_type === "link" || newResource.media_type === "video_link" || newResource.media_type === "audio_link") ? (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground flex items-center gap-2">
                     <span className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs">5</span>
-                    External Link URL
+                    {newResource.media_type === "video_link" 
+                      ? "Video Link (YouTube/Drive/Instagram)" 
+                      : newResource.media_type === "audio_link" 
+                        ? "Audio Link (Drive/SoundCloud)" 
+                        : "External Link URL"}
                   </label>
                   <input
                     type="url"
                     value={newResource.external_link}
                     onChange={(e) => setNewResource({ ...newResource, external_link: e.target.value })}
                     className="w-full bg-muted/50 border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-accent focus:ring-1 focus:ring-accent"
-                    placeholder="https://example.com/page"
+                    placeholder={
+                      newResource.media_type === "video_link" 
+                        ? "https://youtube.com/watch?v=... or https://drive.google.com/..." 
+                        : newResource.media_type === "audio_link"
+                          ? "https://drive.google.com/... or https://soundcloud.com/..."
+                          : "https://example.com/page"
+                    }
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {newResource.media_type === "video_link" && "💡 Use public links from YouTube, Google Drive, or Instagram"}
+                    {newResource.media_type === "audio_link" && "💡 Use public links from Google Drive or SoundCloud"}
+                    {newResource.media_type === "link" && "💡 Paste any external website URL"}
+                  </p>
                 </div>
               ) : newResource.media_type !== "text" && (
                 <div className="space-y-2">
