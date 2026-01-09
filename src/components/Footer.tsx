@@ -90,7 +90,7 @@ const Footer = () => {
               </li>
               <li>
                 <a 
-                  href="https://www.instagram.com/aidevstudio.team" 
+                  href="https://www.instagram.com/aidevstudio.team?igsh=YnhsdmV3b3dkMDJv" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
@@ -101,7 +101,7 @@ const Footer = () => {
               </li>
               <li>
                 <a 
-                  href="https://www.instagram.com/rooh_e_karnah" 
+                  href="https://www.instagram.com/rooh_e_karnah?igsh=MW9oamhrejM4MjJ6eQ==" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
