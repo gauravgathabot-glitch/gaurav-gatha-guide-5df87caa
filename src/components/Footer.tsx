@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Shield, Mail, MapPin, Phone, Instagram, Users } from "lucide-react";
+import { Shield, MapPin, Phone, Instagram, Users, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 const Footer = () => {
   return (
@@ -89,26 +90,42 @@ const Footer = () => {
                 Emergency: 112
               </li>
               <li>
-                <a 
-                  href="https://www.instagram.com/aidevstudio.team?igsh=YnhsdmV3b3dkMDJv" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
+                <button
+                  onClick={() => {
+                    window.open("https://www.instagram.com/aidevstudio.team?igsh=YnhsdmV3b3dkMDJv", '_blank', 'noopener,noreferrer');
+                  }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors group"
                 >
                   <Instagram className="w-4 h-4 text-accent" />
                   @aidevstudio.team
-                </a>
+                  <Copy 
+                    className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText("https://www.instagram.com/aidevstudio.team?igsh=YnhsdmV3b3dkMDJv");
+                      toast.success("Link copied!");
+                    }}
+                  />
+                </button>
               </li>
               <li>
-                <a 
-                  href="https://www.instagram.com/rooh_e_karnah?igsh=MW9oamhrejM4MjJ6eQ==" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors"
+                <button
+                  onClick={() => {
+                    window.open("https://www.instagram.com/rooh_e_karnah?igsh=MW9oamhrejM4MjJ6eQ==", '_blank', 'noopener,noreferrer');
+                  }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors group"
                 >
                   <Instagram className="w-4 h-4 text-accent" />
                   @rooh_e_karnah
-                </a>
+                  <Copy 
+                    className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText("https://www.instagram.com/rooh_e_karnah?igsh=MW9oamhrejM4MjJ6eQ==");
+                      toast.success("Link copied!");
+                    }}
+                  />
+                </button>
               </li>
             </ul>
           </div>

@@ -9,9 +9,12 @@ import {
   Mountain, 
   Star,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Copy,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const AboutSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -226,28 +229,49 @@ const AboutSection = () => {
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 max-w-2xl mx-auto">
             {socialLinks.map((social, index) => (
-              <a
+              <div
                 key={social.name}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 w-full glass-card rounded-xl p-6 border border-border/50 hover:border-accent/50 transition-all duration-300 group hover:-translate-y-1"
+                className="flex-1 w-full glass-card rounded-xl p-6 border border-border/50 hover:border-accent/50 transition-all duration-300 group"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Instagram className="w-6 h-6 text-pink-500" />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-semibold text-foreground flex items-center gap-2">
                       {social.name}
-                      <ExternalLink className="w-3 h-3 text-muted-foreground" />
                     </h4>
                     <p className="text-sm text-accent">{social.handle}</p>
                     <p className="text-xs text-muted-foreground">{social.description}</p>
                   </div>
                 </div>
-              </a>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      window.open(social.url, '_blank', 'noopener,noreferrer');
+                    }}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Open Instagram
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(social.url);
+                      toast.success("Link copied! Paste in browser to open Instagram");
+                    }}
+                  >
+                    <Copy className="w-3 h-3 mr-1" />
+                    Copy Link
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
