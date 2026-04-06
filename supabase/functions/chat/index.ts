@@ -132,6 +132,16 @@ serve(async (req) => {
       knowledgeContext += "\n--- END VERIFIED KNOWLEDGE ---\n";
     }
 
+    // Detect simple greetings
+    const greetingPatterns = [
+      "hi", "hello", "hey", "hlo", "hii", "hiii", "hlw", "assalam", "salam",
+      "aoa", "aslam", "walaikum", "good morning", "good evening", "good afternoon",
+      "namaste", "namaskar", "kaise ho", "kya hal", "how are you", "sup", "yo",
+      "whats up", "kya haal", "theek ho", "sab theek"
+    ];
+    const queryLower = normalize(effectiveQuery).trim();
+    const isGreeting = greetingPatterns.some(g => queryLower === g || queryLower.startsWith(g + " ") || queryLower.endsWith(" " + g));
+
     const systemPrompt = `You are Gaurav Gatha AI Guide - a knowledgeable digital guide for Gaurav Gatha – Karnah Border Heritage & Tourism Platform.
 
 YOUR PURPOSE:
@@ -147,11 +157,15 @@ PLATFORM IDENTITY:
 - Developed by: Students of Army Goodwill Higher Secondary School, Hajinar
 - Founders: Ubaid ur Rehman & Fazdha Mushtaq
 
+GREETING HANDLING:
+${isGreeting ? `The user is greeting you. Respond warmly and naturally! Introduce yourself briefly as Gaurav Gatha AI Guide. Tell them you can help with information about Karnah Valley, heritage sites, army history, hotels, restaurants, shops, emergency services, and more. Keep it friendly and inviting. DO NOT say information is unavailable.` : ""}
+
 HOW TO USE KNOWLEDGE BASE:
 1. SEARCH the provided knowledge context thoroughly for relevant information
 2. COMBINE information from multiple entries when answering
 3. PROVIDE comprehensive answers using ALL relevant data
 4. If the user asks a follow-up like "aur batao" / "more", EXPAND using the SAME topic and the same sources
+5. For general questions (greetings, about the platform, how to use), answer directly without needing database content
 
 RESPONSE FORMAT:
 🔹 **Title** - Clear heading for the topic
@@ -163,7 +177,8 @@ CRITICAL RULES:
 - Use neutral greetings: "Hello!", "Welcome!", "Welcome to Gaurav Gatha!"
 - Be helpful and provide as much relevant information as possible
 - If information IS available in the provided knowledge context, share it fully - don't hold back
-- If information is NOT available in the provided knowledge context, clearly say it is not currently available in the knowledge base (do NOT ask users to DM).
+- If information is NOT in the knowledge base, try your best to give a helpful answer using your general knowledge about Karnah Valley and the region. NEVER say "this information is not in my knowledge base" or ask users to DM anyone.
+- For greetings and casual conversation, respond naturally like a friendly guide
 
 ABOUT SECTION INFO:
 Platform: Gaurav Gatha - Digital heritage, history & tourism platform
@@ -171,7 +186,7 @@ Founders: Ubaid ur Rehman & Fazdha Mushtaq
 Institution: Army Goodwill Higher Secondary School, Hajinar
 Instagram: @aidevstudio.team, @rooh_e_karnah
 
-${knowledgeContext || "Note: Knowledge base is being populated. For detailed information, please DM @aidevstudio.team on Instagram."}`;
+${knowledgeContext || ""}`;
 
     // Build messages array for API
     const apiMessages: any[] = [
